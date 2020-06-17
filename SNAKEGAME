@@ -1,0 +1,176 @@
+import pygame
+import time
+import random
+
+pygame.init()
+
+laius = 600
+kõrgus = 600
+
+#Kõik need print() laused on ise kirjutatud
+print("Mängu reeglid:")
+print("1. Ürita ära süüa võimalikult palju toidu tükke")
+print("2. Kui vastu seina lähed on mäng läbi")
+print("3. Ussi liikumisega vastupidises suunas liikumina pole võimalik")
+print("Head mängimist!")
+
+must = (0, 0, 0)
+valge = (255, 255, 255)
+roheline = (0, 255, 0)
+kollane = (255, 255, 0)
+punane = (255, 0, 0)
+
+ussi_suurus = 10
+gameDisplay = pygame.display.set_mode((laius, kõrgus))
+pygame.display.set_caption("Snake")
+clock = pygame.time.Clock()
+score_font = pygame.font.SysFont("freesansbold.ttf", 35)
+
+
+#Loeb punkte, loogika peale tulin ise, vaatasin netist, kuidas kirja displayda ekraanile, funktsioon saab argumendiks mängija skoori ning toob selle ekraanile
+def Punktid(skoor):
+    summa = score_font.render("Your Score: " + str(skoor), True, kollane)
+    gameDisplay.blit(summa, [0, 0])
+
+
+#Loob teksti kasti, selle funktsiooni ja ka järgmised 2 võtsin pygame youtube videost, mis Te meile saatsite ning tegin muutujad kohasemaks,
+#Teksti_objekt saab argumendiks teksti mida tahetakse ekraanile kuvada ja fondi milles see tekst peab olema, seejärel loob aluse või tagapinna, kuhu see tekst kuvatakse
+def teksti_objekt(tekst, font):
+    textSurface = font.render(tekst, True, must)
+    return textSurface, textSurface.get_rect()
+
+#Loob kirja ja seab selle valmis, kiri_ekraanil saab argumendiks teksti, mida tahetakse ekraanile kuvada ning paneb selle kuvamiseks valmis, samuti loob ka uue mängu
+def kiri_ekraanil(tekst):
+    SuurTekst = pygame.font.Font("freesansbold.ttf", 50)
+    TextSurf, TextRect = teksti_objekt(tekst, SuurTekst)
+    TextRect.center =((laius/2), (kõrgus/2))
+    gameDisplay.blit(TextSurf, TextRect)
+    pygame.display.update()
+    time.sleep(2)
+    game_loop()
+
+#Kutsub kirja ekraanile välja
+def kraav():
+    kiri_ekraanil("Lõpp")
+
+
+#Loob ussi, otsisin, milline oleks mulle meelepärasem moodus uss luua ning leidsin selle internetist ning lisasin for tsükkli, funktsioon saab argumendiks ussi mõõtmed(ussi_suurus) ning ussi listi
+def uss(ussi_suurus, ussi_list):
+    for x in ussi_list:
+        pygame.draw.rect(gameDisplay, must, [x[0], x[1], ussi_suurus, ussi_suurus])
+
+
+#Main mängu osa, kus toimub suurem osa loogikast, selle lõi peaaegu täielikult ise, lisades sinna ka eelnevalt kirja pandud funktsioonid
+def game_loop():
+
+    gameExit = False
+
+    x_muut = 0
+    y_muut = 0
+
+    x = laius/2
+    y = kõrgus/2
+
+    ussi_list = []
+    ussi_pikkus = 1
+    Suund = 0
+    lisapunktid = 0
+
+    toit_x_algus = round(random.randrange(0, laius), 0)
+    toit_y_algus = round(random.randrange(0, laius), 0)
+    toit_x_jääk = toit_x_algus % 10
+    toit_y_jääk = toit_y_algus % 10
+    toit_x = toit_x_algus - toit_x_jääk
+    toit_y = toit_y_algus - toit_y_jääk
+    a = 5
+    b = random.randint(0, 10)
+    if a == b:
+        värv = punane
+    else:
+        värv = roheline
+
+
+    #Kuni gameExit ei võrdu True-ga jätkub see tsükkel
+    while not gameExit:
+        #Loeb ära iga sündmuse või inputi mis arvuti saab
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                gameExit = True
+            #Kontrollib kas vajutati noolega nuppu ning ei lase vastas suunas liikuda
+            vajutatud_nupp = pygame.key.get_pressed()
+            if vajutatud_nupp[pygame.K_ESCAPE]:
+                gameExit = pause()
+            if vajutatud_nupp[pygame.K_LEFT]:
+                if Suund != 2:
+                    x_muut = -10
+                    y_muut = 0
+                    Suund = 4
+            elif vajutatud_nupp[pygame.K_RIGHT]:
+                if Suund != 4:
+                    x_muut = 10
+                    y_muut = 0
+                    Suund = 2
+            elif vajutatud_nupp[pygame.K_UP]:
+                if Suund != 3:
+                    y_muut = -10
+                    x_muut = 0
+                    Suund = 1
+            elif vajutatud_nupp[pygame.K_DOWN]:
+                if Suund != 1:
+                    y_muut = 10
+                    x_muut = 0
+                    Suund = 3
+        #Ei lase ussil külgmistest piiridest välja minna
+        if x >= laius or x <= 0:
+            x_muut = 0
+            kraav()
+
+        #Ei lase ussil ülemisest ja algumisest piirist välja minna
+        if y >= kõrgus or y <= 0:
+            y_muut = 0
+            kraav()
+
+        x += x_muut
+        y += y_muut
+        gameDisplay.fill(valge)
+
+
+        pygame.draw.rect(gameDisplay, värv, [toit_x, toit_y, ussi_suurus, ussi_suurus])
+        ussi_pea = []
+        ussi_pea.append(x)
+        ussi_pea.append(y)
+        ussi_list.append(ussi_pea)
+        Punktid(ussi_pikkus - 1)
+        if len(ussi_list) > ussi_pikkus:
+            del ussi_list[0]
+
+        uss(ussi_suurus, ussi_list)
+        pygame.display.update()
+
+        #Kontrollib, kas uss on toidutüki peal või mitte, kui on siis liidab ussile pikkust juurde
+        if toit_x == x and toit_y == y:
+            if värv == punane:
+                ussi_pikkus += 5
+            else:
+                ussi_pikkus += 1
+            toit_x_algus = round(random.randrange(0, laius), 0)
+            toit_y_algus = round(random.randrange(0, laius), 0)
+            toit_x_jääk = toit_x_algus % 10
+            toit_y_jääk = toit_y_algus % 10
+            toit_x = toit_x_algus - toit_x_jääk
+            toit_y = toit_y_algus - toit_y_jääk
+            a = 3
+            b = random.randint(0, 5)
+            if a == b:
+                värv = punane
+            else:
+                värv = roheline
+
+        pygame.display.update()
+        clock.tick(15)
+
+
+game_loop()
+
+pygame.quit()
+quit()
